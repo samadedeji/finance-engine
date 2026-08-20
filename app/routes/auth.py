@@ -1,4 +1,10 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    get_jwt_identity,
+    jwt_required,
+)
 
 from app import db
 from app.models.business import Business
@@ -25,8 +31,13 @@ def register():
     db.session.add(business)
     db.session.commit()
 
-    session["business_id"] = business.id
-    return jsonify(business.to_dict()), 201
+    access_token = create_access_token(identity=str(business.id))
+    refresh_token = create_refresh_token(identity=str(business.id))
+    return jsonify({
+        "business": business.to_dict(),
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+    }), 201
 
 
 @auth_bp.route("/login", methods=["POST"])
@@ -39,11 +50,24 @@ def login():
     if not business or not business.check_password(password or ""):
         return jsonify({"error": "Invalid phone number or password"}), 401
 
-    session["business_id"] = business.id
-    return jsonify(business.to_dict()), 200
+    access_token = create_access_token(identity=str(business.id))
+    refresh_token = create_refresh_token(identity=str(business.id))
+    return jsonify({
+        "business": business.to_dict(),
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+    }), 200
+
+
+@auth_bp.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh():
+    identity = get_jwt_identity()
+    return jsonify({"access_token": create_access_token(identity=identity)}), 200
 
 
 @auth_bp.route("/logout", methods=["POST"])
+@jwt_required()
 def logout():
-    session.pop("business_id", None)
+    # Stateless JWT: nothing to invalidate server-side yet. The frontend is responsible for discarding both tokens on logout.
     return jsonify({"message": "Logged out"}), 200

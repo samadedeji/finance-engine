@@ -1,92 +1,141 @@
 # Finance Engine
 
-Finance Engine is a lightweight financial tracking and insights backend for small businesses. A business logs sales and expenses through short, WhatsApp-style text messages or a simple web dashboard, both backed by the same core engine, which turns raw transactions into plain-language insights and advice.
+Finance Engine is a Flask API for recording small-business income and
+expenses, parsing short transaction messages, and producing financial reports.
 
-## Why
+## Stack
 
-Most small business owners already track money in their heads or in a notebook. Finance Engine meets them where they are: instead of forms and dropdowns, they type something like `sold 3 sachets, 500 naira` or `spent 1500 on transport`, and the engine handles the rest, parsing it, storing it, and rolling it into a weekly picture of income, expenses, and where the money's actually going.
+- Flask and Flask-SQLAlchemy
+- JWT access and refresh tokens via Flask-JWT-Extended
+- MySQL through SQLAlchemy and `mysqlconnector`
+- Flask-Migrate for database schema migrations
+- Gunicorn for production serving
 
-## How it works
+## Setup
 
-- **Log transactions naturally.** The chat endpoint accepts short free-text messages and parses them into a structured transaction (type, category, amount) using a deliberately simple, rule-based parser. No ML dependency, and no black box: if a message doesn't match a supported format, the engine says so instead of guessing.
-- **Get a report on demand.** Ask "how's my week?" in chat, or hit the reports endpoint, and get total income, total expenses, net, trend percentage vs. the previous period, and top expense categories.
-- **Get advice, not just numbers.** A small rules engine looks at the aggregated report and flags things worth attention, e.g. expenses growing faster than income, a repeat loss, or a single category eating the budget.
-- **Use it as an SDK or an API.** The core engine (`add_transaction`, `get_report`) has no Flask dependency. It's the function-level surface a future integration (a bank, a payments provider) could call directly, bypassing the chat and web interfaces entirely.
+Create and activate a Python environment, then install dependencies:
 
-## Tech stack
-
-- **Backend:** Flask, Flask-SQLAlchemy, Flask-Cors
-- **Auth:** Session-based, password hashing via Werkzeug
-- **Database:** SQLite by default, swappable to Postgres via `DATABASE_URL`, no code changes needed
-- **Frontend:** Simple server-rendered web UI (login/register, dashboard, chat simulator)
-- **Deployment:** `gunicorn run:app` as the production entry point
-
-## Project structure
-
-```
-finance-engine/
-├── app/
-│   ├── engine/
-│   │   ├── core.py         # add_transaction, get_report — the core "SDK"
-│   │   └── parser.py       # rule-based WhatsApp-style message parsing
-│   ├── models/
-│   │   ├── business.py
-│   │   └── transaction.py
-│   ├── routes/
-│   │   ├── auth.py         # register, login, logout
-│   │   ├── chat.py         # WhatsApp-style chat endpoint
-│   │   ├── reports.py      # GET /reports
-│   │   ├── transactions.py # POST/GET /transactions
-│   │   └── pages.py        # server-rendered pages
-│   └── templates/          # login, dashboard, chat
-├── config.py                # DB config
-├── run.py                   # entry point
-├── seed.py                  # demo data generator
-└── requirements.txt
+```powershell
+python -m venv vfinance
+.\vfinance\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
-## Getting started
+Create a `.env` file in the project root:
+
+```env
+SECRET_KEY=replace-with-a-long-random-flask-secret
+JWT_SECRET_KEY=replace-with-a-different-long-random-jwt-secret
+FRONTEND_ORIGIN=http://localhost:3000
+DATABASE_URL=mysql+mysqlconnector://root@localhost/finance-enginedb
+```
+
+`DATABASE_URL` must use the `mysql+mysqlconnector://` scheme. The MySQL
+server and database must exist before starting the application.
+
+Run migrations before using the API:
+
+```powershell
+flask --app run.py db init       # run once, only if migrations/ does not exist
+flask --app run.py db migrate -m "Initial migration"
+flask --app run.py db upgrade
+```
+
+Start the development server:
+
+```powershell
+python run.py
+```
+
+The local server listens on `http://127.0.0.1:5556`. The root health check is
+available at `GET /` and returns `{"status": "ok"}`.
+
+For production, use:
 
 ```bash
-git clone <repo-url>
-cd finance-engine
-pip install -r requirements.txt
-python seed.py      # creates the database and seeds a demo business
-python run.py        # runs the app at http://127.0.0.1:5000
+gunicorn run:app
 ```
 
-Demo login: phone `08010000000`, password `password123`
+## Authentication
 
-## API overview
+Registration and login return an access token and a refresh token. Send the
+access token on protected requests:
 
-| Endpoint | Method | Description |
+```http
+Authorization: Bearer <access_token>
+```
+
+`business_id` is never supplied by the client. The server derives it from the
+JWT identity for every business-specific operation.
+
+## API
+
+### Authentication endpoints
+
+| Endpoint | Request | Response |
 |---|---|---|
-| `/register` | POST | Create a new business account |
-| `/login` | POST | Log in with phone number and password |
-| `/logout` | POST | Log out |
-| `/transactions` | POST | Log a transaction directly (type, amount, category, date) |
-| `/transactions` | GET | List a business's transactions |
-| `/reports` | GET | Get an aggregated report (`period=day` or `week`) |
-| `/chat` | POST | Send a WhatsApp-style message to log a transaction or ask for a report |
+| `POST /api/register` | `name`, `phone_number`, `password`, optional `business_type` | `{ "business": {...}, "access_token": "...", "refresh_token": "..." }` |
+| `POST /api/login` | `phone_number`, `password` | `{ "business": {...}, "access_token": "...", "refresh_token": "..." }` |
+| `POST /api/refresh` | Refresh token in the Bearer header | `{ "access_token": "..." }` |
+| `POST /api/logout` | Access token in the Bearer header | `{ "message": "Logged out" }` |
 
-## Supported chat message formats
+### Protected data endpoints
+
+All data endpoints require a valid access token. Do not include
+`business_id` in any request body or query string.
+
+| Endpoint | Request | Response |
+|---|---|---|
+| `POST /api/transactions` | `type`, positive finite numeric `amount`, optional `category`, `note`, and `date` | Created transaction object |
+| `GET /api/transactions` | No request body | JSON array of transactions |
+| `GET /api/reports?period=week` | `period` is `day` or `week` | Report object with totals, trends, insights, and advice |
+| `POST /api/chat` | `{ "message": "spent 1500 on transport" }` | Chat reply and related transaction/report data |
+
+The unauthenticated health check `GET /` returns `{ "status": "ok" }`.
+
+## Chat examples
 
 - `sold 3 sachets, 500 naira`
 - `bought supplies 2000`
 - `spent 1500 on transport`
 - `paid 3000 for rent`
-- `how's my week?` — triggers a report summary instead of logging a transaction
+- `how's my week?`
 
-If a message doesn't match a supported format, the parser returns nothing rather than guessing, and the chat endpoint asks the user to rephrase.
+## Seed data
 
-## Deployment
+The seed script resets the configured database with demo data. Use it only in
+development or against a disposable database:
 
-Set `DATABASE_URL` and `SECRET_KEY` as environment variables in production (e.g. on Render). The app runs via `gunicorn run:app`.
+```powershell
+python seed.py
+```
 
-## Status
+Demo credentials:
 
-MVP / demo-ready. Core engine, parser, auth, and REST API are built and tested. Frontend styling, deployment, and the Postgres migration are still open.
+```text
+phone_number=08010000000
+password=password123
+```
 
-## License
+Use `POST /api/login` with these credentials to obtain tokens.
 
-TBD
+## Environment variables
+
+- `DATABASE_URL`: required MySQL SQLAlchemy URI using
+	`mysql+mysqlconnector://`.
+- `SECRET_KEY`: Flask signing key.
+- `JWT_SECRET_KEY`: separate JWT signing key; do not reuse `SECRET_KEY`.
+- `FRONTEND_ORIGIN`: the single frontend origin allowed by CORS; defaults to
+	`http://localhost:3000` in the app.
+
+Access tokens expire after 30 minutes and refresh tokens after 30 days. These
+lifetimes are currently configured in `config.py`.
+
+## Known limitations
+
+Logout is stateless. The server does not maintain a token blocklist, so logout
+only means that the frontend discards both tokens. It is not full server-side
+token revocation.
+
+No automated test suite is currently included. Manual HTTP checks should be
+performed against a running local server after migrations are applied.

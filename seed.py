@@ -58,5 +58,6 @@ with app.app_context():
         day += timedelta(days=1)
 
     db.session.commit()
-    print(f"Seeded business '{biz.name}' (id={biz.id}) with sample transactions.")
+    print("Seed data created.")
     print(f"Login: phone_number=08010000000, password=password123")
+    print("Get a token pair by calling POST /api/login with these credentials.")
