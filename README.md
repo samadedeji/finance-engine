@@ -1,18 +1,33 @@
-# [Product Name — TBD]
+# FiEngine
 
 A financial intelligence layer for small businesses. Log sales and expenses
 via a WhatsApp-style chat interface or a simple web dashboard — both backed
 by the same core engine, which generates plain-language insights and advice.
 
+Built for Hackaholics 7.0: Flask REST API backend + React (TypeScript, Tailwind
+CSS) frontend.
+
 ## Setup
+
+### Backend
 
 ```bash
 pip install -r requirements.txt
 python seed.py      # creates the database and seeds a demo business
-python run.py        # runs the app at http://127.0.0.1:5000
+python run.py        # runs the API at http://127.0.0.1:5000
 ```
 
 Demo login: phone `08010000000`, password `password123`
+
+### Frontend (React + TypeScript + Tailwind)
+
+```bash
+cd frontend
+npm install
+npm run dev          # http://localhost:5173 (proxies /api to the Flask backend)
+```
+
+Production build: `npm run build` (output in `frontend/dist/`).
 
 ## Project Structure
 
@@ -25,6 +40,7 @@ app/
 config.py         DB config (SQLite by default, swap DATABASE_URL for Postgres)
 run.py            entry point
 seed.py           demo data generator
+frontend/         React (Vite + TypeScript + Tailwind) SPA — auth, dashboard, chat
 ```
 
 ## Core Engine (the "SDK" layer)
