@@ -27,7 +27,11 @@ CATEGORY_KEYWORDS = {
     "wages": "salaries",
 }
 
-AMOUNT_PATTERN = re.compile(r"(\d[\d,]*(?:\.\d+)?)\s*(?:naira|ngn|₦)?", re.IGNORECASE)
+# Matches a number optionally followed by a currency word/symbol, capturing
+# both the number and whether a currency marker was attached to it.
+AMOUNT_PATTERN = re.compile(
+    r"(\d[\d,]*(?:\.\d+)?)\s*(naira|ngn|₦)?", re.IGNORECASE
+)
 
 
 def parse_message(text: str) -> dict:
@@ -57,12 +61,23 @@ def parse_message(text: str) -> dict:
     if txn_type is None:
         return None
 
-    amounts = AMOUNT_PATTERN.findall(lowered)
-    if not amounts:
+    matches = AMOUNT_PATTERN.findall(lowered)
+    if not matches:
         return None
-    # Take the largest number found — avoids false positives from things
-    # like "3 sachets" being picked over the actual price.
-    amount = max(float(a.replace(",", "")) for a in amounts)
+
+    # Prefer a number that has a currency word/symbol directly attached
+    # (e.g. "500 naira") — this is the actual price, not a quantity.
+    currency_tagged = [num for num, currency in matches if currency]
+    if currency_tagged:
+        amount = float(currency_tagged[-1].replace(",", ""))
+    else:
+        # No currency marker anywhere in the message. Fall back to the last
+        # number mentioned, since your documented formats state quantity
+        # first and price last (e.g. "spent 1500 on transport",
+        # "sold 3 sachets for 500") rather than picking the largest number,
+        # which wrongly favors quantities like "sold 100 units for 20 naira".
+        amount = float(matches[-1][0].replace(",", ""))
+
     if amount <= 0:
         return None
 
