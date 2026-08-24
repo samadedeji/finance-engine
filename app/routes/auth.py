@@ -71,3 +71,48 @@ def refresh():
 def logout():
     # Stateless JWT: nothing to invalidate server-side yet. The frontend is responsible for discarding both tokens on logout.
     return jsonify({"message": "Logged out"}), 200
+
+
+@auth_bp.route("/profile", methods=["PUT"])
+@jwt_required()
+def update_profile():
+    business_id = int(get_jwt_identity())
+    business = Business.query.get_or_404(business_id)
+    data = request.get_json(silent=True) or {}
+
+    if "name" in data:
+        business.name = data["name"]
+    if "business_type" in data:
+        business.business_type = data["business_type"]
+    if "phone_number" in data:
+        existing = Business.query.filter_by(phone_number=data["phone_number"]).first()
+        if existing and existing.id != business_id:
+            return jsonify({"error": "A business with this phone number already exists"}), 409
+        business.phone_number = data["phone_number"]
+
+    db.session.commit()
+    return jsonify(business.to_dict()), 200
+
+
+@auth_bp.route("/change-password", methods=["POST"])
+@jwt_required()
+def change_password():
+    business_id = int(get_jwt_identity())
+    business = Business.query.get_or_404(business_id)
+    data = request.get_json(silent=True) or {}
+
+    current_password = data.get("current_password")
+    new_password = data.get("new_password")
+
+    if not current_password or not new_password:
+        return jsonify({"error": "current_password and new_password are required"}), 400
+
+    if not business.check_password(current_password):
+        return jsonify({"error": "Current password is incorrect"}), 401
+
+    if len(new_password) < 6:
+        return jsonify({"error": "New password must be at least 6 characters"}), 400
+
+    business.set_password(new_password)
+    db.session.commit()
+    return jsonify({"message": "Password updated successfully"}), 200

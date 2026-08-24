@@ -31,6 +31,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <NavLink to="/dashboard" className={navLinkClass}>
                 Dashboard
               </NavLink>
+              <NavLink to="/reports" className={navLinkClass}>
+                Reports
+              </NavLink>
               <NavLink to="/chat" className={navLinkClass}>
                 Chat
               </NavLink>
@@ -50,7 +53,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {business && (
             <div className="flex items-center gap-3">
-              <span className="hidden text-sm text-slate-500 sm:block">{business.name}</span>
+              <NavLink to="/settings" className="hidden text-sm text-slate-500 transition-colors hover:text-slate-900 sm:block">
+                {business.name}
+              </NavLink>
               <button
                 onClick={handleLogout}
                 className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-600"

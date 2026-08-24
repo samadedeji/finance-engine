@@ -62,6 +62,12 @@ export const api = {
       body: JSON.stringify({ message }),
     })
   },
+  updateProfile(body: { name?: string; business_type?: string; phone_number?: string }) {
+    return request<Business>('/api/profile', { method: 'PUT', body: JSON.stringify(body) })
+  },
+  changePassword(body: { current_password: string; new_password: string }) {
+    return request<{ message: string }>('/api/change-password', { method: 'POST', body: JSON.stringify(body) })
+  },
 }
 
 const BUSINESS_KEY = 'fiengine.business'

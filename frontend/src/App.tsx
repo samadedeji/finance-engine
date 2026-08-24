@@ -3,9 +3,11 @@ import { auth } from './api/client'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
+import Reports from './pages/Reports'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Chat from './pages/Chat'
+import Settings from './pages/Settings'
 
 function Protected({ children }: { children: React.ReactNode }) {
   if (!auth.getBusiness()) return <Navigate to="/login" replace />
@@ -29,10 +31,26 @@ export default function App() {
             }
           />
           <Route
+            path="/reports"
+            element={
+              <Protected>
+                <Reports />
+              </Protected>
+            }
+          />
+          <Route
             path="/chat"
             element={
               <Protected>
                 <Chat />
+              </Protected>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <Protected>
+                <Settings />
               </Protected>
             }
           />
