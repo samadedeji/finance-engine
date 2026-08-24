@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { api, auth } from '../../api/client'
+import { api } from '../../api/client'
 import { CATEGORIES, type TxnType } from '../../api/types'
 
 interface Props {
@@ -7,7 +7,6 @@ interface Props {
 }
 
 export default function TransactionForm({ onSaved }: Props) {
-  const business = auth.getBusiness()!
   const [type, setType] = useState<TxnType>('income')
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState<string>('sales')
@@ -32,7 +31,6 @@ export default function TransactionForm({ onSaved }: Props) {
     setSaving(true)
     try {
       await api.createTransaction({
-        business_id: business.id,
         type,
         amount: amt,
         category,

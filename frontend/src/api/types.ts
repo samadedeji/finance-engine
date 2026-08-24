@@ -6,6 +6,12 @@ export interface Business {
   created_at: string | null
 }
 
+export interface AuthResponse {
+  business: Business
+  access_token: string
+  refresh_token: string
+}
+
 export type TxnType = 'income' | 'expense'
 
 export interface Transaction {

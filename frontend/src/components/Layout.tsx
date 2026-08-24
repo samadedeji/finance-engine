@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { auth } from '../api/client'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -12,7 +12,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => {
     auth.clear()
-    navigate('/login')
+    navigate('/')
   }
 
   return (
@@ -28,12 +28,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {business && (
             <nav className="flex items-center gap-1 sm:gap-2">
-              <NavLink to="/" className={navLinkClass} end>
+              <NavLink to="/dashboard" className={navLinkClass}>
                 Dashboard
               </NavLink>
               <NavLink to="/chat" className={navLinkClass}>
                 Chat
               </NavLink>
+            </nav>
+          )}
+
+          {!business && (
+            <nav className="flex items-center gap-2">
+              <Link to="/login" className="rounded-full px-4 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100">
+                Sign in
+              </Link>
+              <Link to="/register" className="rounded-full bg-brand-700 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-brand-800">
+                Get started
+              </Link>
             </nav>
           )}
 

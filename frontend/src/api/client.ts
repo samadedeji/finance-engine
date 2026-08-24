@@ -1,6 +1,7 @@
-import type { Business, ChatResponse, Period, Report, Transaction } from './types'
+import type { AuthResponse, Business, ChatResponse, Period, Report, Transaction } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? ''
+const TOKEN_KEY = 'fiengine.token'
 
 export class ApiError extends Error {
   status: number
@@ -10,10 +11,19 @@ export class ApiError extends Error {
   }
 }
 
+function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY)
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers: { ...headers, ...options?.headers },
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
@@ -24,40 +34,41 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   register(body: { name: string; phone_number: string; password: string; business_type?: string }) {
-    return request<Business>('/api/register', { method: 'POST', body: JSON.stringify(body) })
+    return request<AuthResponse>('/api/register', { method: 'POST', body: JSON.stringify(body) })
   },
   login(body: { phone_number: string; password: string }) {
-    return request<Business>('/api/login', { method: 'POST', body: JSON.stringify(body) })
+    return request<AuthResponse>('/api/login', { method: 'POST', body: JSON.stringify(body) })
   },
-  getReport(businessId: number, period: Period = 'week') {
-    return request<Report>(`/api/reports?business_id=${businessId}&period=${period}`)
+  getReport(_businessId: number, period: Period = 'week') {
+    return request<Report>(`/api/reports?period=${period}`)
   },
   createTransaction(body: {
-    business_id: number
+    business_id?: number
     type: string
     amount: number
     category: string
     date?: string
     note?: string
   }) {
-    return request<Transaction>('/api/transactions', { method: 'POST', body: JSON.stringify(body) })
+    const { business_id: _, ...payload } = body
+    return request<Transaction>('/api/transactions', { method: 'POST', body: JSON.stringify(payload) })
   },
-  listTransactions(businessId: number) {
-    return request<Transaction[]>(`/api/transactions?business_id=${businessId}`)
+  listTransactions(_businessId: number) {
+    return request<Transaction[]>(`/api/transactions`)
   },
-  chat(businessId: number, message: string) {
+  chat(_businessId: number, message: string) {
     return request<ChatResponse>('/api/chat', {
       method: 'POST',
-      body: JSON.stringify({ business_id: businessId, message }),
+      body: JSON.stringify({ message }),
     })
   },
 }
 
-const STORAGE_KEY = 'fiengine.business'
+const BUSINESS_KEY = 'fiengine.business'
 
 export const auth = {
   getBusiness(): Business | null {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(BUSINESS_KEY)
     if (!raw) return null
     try {
       return JSON.parse(raw) as Business
@@ -65,11 +76,13 @@ export const auth = {
       return null
     }
   },
-  setBusiness(b: Business) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(b))
+  setBusiness(b: Business, token?: string) {
+    localStorage.setItem(BUSINESS_KEY, JSON.stringify(b))
+    if (token) localStorage.setItem(TOKEN_KEY, token)
   },
   clear() {
-    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(BUSINESS_KEY)
+    localStorage.removeItem(TOKEN_KEY)
   },
 }
 

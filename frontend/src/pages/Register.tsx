@@ -5,22 +5,26 @@ import { api, auth } from '../api/client'
 export default function Register() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
     const fd = new FormData(e.currentTarget)
+    setLoading(true)
     try {
-      const business = await api.register({
+      const res = await api.register({
         name: String(fd.get('name')),
         phone_number: String(fd.get('phone_number')),
         password: String(fd.get('password')),
         business_type: String(fd.get('business_type')) || undefined,
       })
-      auth.setBusiness(business)
-      navigate('/', { replace: true })
+      auth.setBusiness(res.business, res.access_token)
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -59,8 +63,12 @@ export default function Register() {
           placeholder="Password (min 6 characters)"
           className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
         />
-        <button className="w-full rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-800">
-          Create account
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {loading ? 'Creating account…' : 'Create account'}
         </button>
       </form>
       <p className="mt-4 text-center text-sm text-slate-500">
