@@ -11,6 +11,7 @@ Public functions:
     get_report(business_id, period) -> dict
 """
 
+import math
 from datetime import date as date_cls, timedelta
 from decimal import Decimal
 
@@ -32,7 +33,11 @@ def add_transaction(
         raise ValueError(f"type must be one of {TYPES}")
     if category not in CATEGORIES:
         category = "other"
-    if amount is None or amount <= 0:
+    if not isinstance(amount, (int, float)) or isinstance(amount, bool):
+        raise ValueError("amount must be a number")
+    if not math.isfinite(amount):
+        raise ValueError("amount must be a finite number")
+    if amount <= 0:
         raise ValueError("amount must be a positive number")
 
     txn = Transaction(

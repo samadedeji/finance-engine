@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.engine.parser import parse_message
 from app.engine.core import add_transaction, get_report
@@ -7,21 +8,19 @@ chat_bp = Blueprint("chat", __name__)
 
 
 @chat_bp.route("/chat", methods=["POST"])
+@jwt_required()
 def chat():
     """
     Simulates a WhatsApp-style interaction.
-    Body: { "business_id": 1, "message": "sold 3 sachets, 500 naira" }
+    Body: { "message": "sold 3 sachets, 500 naira" }
 
     This endpoint is deliberately the only thing that would change if this
     were wired to a real WhatsApp Business API webhook later — everything
     it calls (parse_message, add_transaction, get_report) stays the same.
     """
+    business_id = int(get_jwt_identity())
     data = request.get_json(silent=True) or {}
-    business_id = data.get("business_id")
     message = data.get("message", "")
-
-    if not business_id:
-        return jsonify({"error": "business_id is required"}), 400
 
     lowered = message.strip().lower()
 

@@ -1,8 +1,15 @@
-# FiEngine
+# Finance Engine
 
-A financial intelligence layer for small businesses. Log sales and expenses
-via a WhatsApp-style chat interface or a simple web dashboard — both backed
-by the same core engine, which generates plain-language insights and advice.
+Finance Engine is a Flask API for recording small-business income and
+expenses, parsing short transaction messages, and producing financial reports.
+
+## Stack
+
+- Flask and Flask-SQLAlchemy
+- JWT access and refresh tokens via Flask-JWT-Extended
+- MySQL through SQLAlchemy and `mysqlconnector`
+- Flask-Migrate for database schema migrations
+- Gunicorn for production serving
 
 Built for Hackaholics 7.0: Flask REST API backend + React (TypeScript, Tailwind
 CSS) frontend.
@@ -11,13 +18,51 @@ CSS) frontend.
 
 ### Backend
 
+Create and activate a Python environment, then install dependencies:
+
 ```bash
+python -m venv vfinance
+# Linux/Mac
+source vfinance/bin/activate
+# Windows
+.\vfinance\Scripts\Activate.ps1
 pip install -r requirements.txt
-python seed.py      # creates the database and seeds a demo business
-python run.py        # runs the API at http://127.0.0.1:5000
 ```
 
-Demo login: phone `08010000000`, password `password123`
+Create a `.env` file in the project root:
+
+```env
+SECRET_KEY=replace-with-a-long-random-flask-secret
+JWT_SECRET_KEY=replace-with-a-different-long-random-jwt-secret
+FRONTEND_ORIGIN=http://localhost:3000
+DATABASE_URL=mysql+mysqlconnector://root@localhost/finance-enginedb
+```
+
+`DATABASE_URL` must use the `mysql+mysqlconnector://` scheme. The MySQL
+server and database must exist before starting the application.
+
+Run migrations before using the API:
+
+```bash
+flask --app run.py db init       # run once, only if migrations/ does not exist
+flask --app run.py db migrate -m "Initial migration"
+flask --app run.py db upgrade
+```
+
+Start the development server:
+
+```bash
+python run.py
+```
+
+The local server listens on `http://127.0.0.1:5556`. The root health check is
+available at `GET /` and returns `{"status": "ok"}`.
+
+For production, use:
+
+```bash
+gunicorn run:app
+```
 
 ### Frontend (React + TypeScript + Tailwind)
 
@@ -37,28 +82,92 @@ app/
   engine/        core.py (reporting/insights/advice), parser.py (message parsing)
   routes/        auth, transactions, reports, chat, pages
   templates/     login, dashboard, chat (simple server-rendered UI)
-config.py         DB config (SQLite by default, swap DATABASE_URL for Postgres)
+config.py         DB config (MySQL via DATABASE_URL)
 run.py            entry point
 seed.py           demo data generator
 frontend/         React (Vite + TypeScript + Tailwind) SPA — auth, dashboard, chat
 ```
 
-## Core Engine (the "SDK" layer)
+## Authentication
 
-`app/engine/core.py` has no Flask dependency — `add_transaction()` and
-`get_report()` are the two functions a bank integrator would call directly
-to feed in their own transaction data and get reports/insights/advice back,
-without touching either the web app or chat interface.
+Registration and login return an access token and a refresh token. Send the
+access token on protected requests:
 
-## Supported chat message formats
+```http
+Authorization: Bearer <access_token>
+```
 
-- "sold 3 sachets, 500 naira"
-- "bought supplies 2000"
-- "spent 1500 on transport"
-- "paid 3000 for rent"
-- "how's my week?" — triggers a report summary
+`business_id` is never supplied by the client. The server derives it from the
+JWT identity for every business-specific operation.
 
-## Deployment
+## API
 
-Set `DATABASE_URL` and `SECRET_KEY` as environment variables in production
-(e.g. on Render). Uses `gunicorn run:app` as the production entry point.
+### Authentication endpoints
+
+| Endpoint | Request | Response |
+|---|---|---|
+| `POST /api/register` | `name`, `phone_number`, `password`, optional `business_type` | `{ "business": {...}, "access_token": "...", "refresh_token": "..." }` |
+| `POST /api/login` | `phone_number`, `password` | `{ "business": {...}, "access_token": "...", "refresh_token": "..." }` |
+| `POST /api/refresh` | Refresh token in the Bearer header | `{ "access_token": "..." }` |
+| `POST /api/logout` | Access token in the Bearer header | `{ "message": "Logged out" }` |
+
+### Protected data endpoints
+
+All data endpoints require a valid access token. Do not include
+`business_id` in any request body or query string.
+
+| Endpoint | Request | Response |
+|---|---|---|
+| `POST /api/transactions` | `type`, positive finite numeric `amount`, optional `category`, `note`, and `date` | Created transaction object |
+| `GET /api/transactions` | No request body | JSON array of transactions |
+| `GET /api/reports?period=week` | `period` is `day` or `week` | Report object with totals, trends, insights, and advice |
+| `POST /api/chat` | `{ "message": "spent 1500 on transport" }` | Chat reply and related transaction/report data |
+
+The unauthenticated health check `GET /` returns `{ "status": "ok" }`.
+
+## Chat examples
+
+- `sold 3 sachets, 500 naira`
+- `bought supplies 2000`
+- `spent 1500 on transport`
+- `paid 3000 for rent`
+- `how's my week?`
+
+## Seed data
+
+The seed script resets the configured database with demo data. Use it only in
+development or against a disposable database:
+
+```bash
+python seed.py
+```
+
+Demo credentials:
+
+```text
+phone_number=08010000000
+password=password123
+```
+
+Use `POST /api/login` with these credentials to obtain tokens.
+
+## Environment variables
+
+- `DATABASE_URL`: required MySQL SQLAlchemy URI using
+	`mysql+mysqlconnector://`.
+- `SECRET_KEY`: Flask signing key.
+- `JWT_SECRET_KEY`: separate JWT signing key; do not reuse `SECRET_KEY`.
+- `FRONTEND_ORIGIN`: the single frontend origin allowed by CORS; defaults to
+	`http://localhost:3000` in the app.
+
+Access tokens expire after 30 minutes and refresh tokens after 30 days. These
+lifetimes are currently configured in `config.py`.
+
+## Known limitations
+
+Logout is stateless. The server does not maintain a token blocklist, so logout
+only means that the frontend discards both tokens. It is not full server-side
+token revocation.
+
+No automated test suite is currently included. Manual HTTP checks should be
+performed against a running local server after migrations are applied.
