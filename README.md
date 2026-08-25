@@ -11,12 +11,20 @@ expenses, parsing short transaction messages, and producing financial reports.
 - Flask-Migrate for database schema migrations
 - Gunicorn for production serving
 
+Built for Hackaholics 7.0: Flask REST API backend + React (TypeScript, Tailwind
+CSS) frontend.
+
 ## Setup
+
+### Backend
 
 Create and activate a Python environment, then install dependencies:
 
-```powershell
+```bash
 python -m venv vfinance
+# Linux/Mac
+source vfinance/bin/activate
+# Windows
 .\vfinance\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
@@ -35,7 +43,7 @@ server and database must exist before starting the application.
 
 Run migrations before using the API:
 
-```powershell
+```bash
 flask --app run.py db init       # run once, only if migrations/ does not exist
 flask --app run.py db migrate -m "Initial migration"
 flask --app run.py db upgrade
@@ -43,7 +51,7 @@ flask --app run.py db upgrade
 
 Start the development server:
 
-```powershell
+```bash
 python run.py
 ```
 
@@ -54,6 +62,30 @@ For production, use:
 
 ```bash
 gunicorn run:app
+```
+
+### Frontend (React + TypeScript + Tailwind)
+
+```bash
+cd frontend
+npm install
+npm run dev          # http://localhost:5173 (proxies /api to the Flask backend)
+```
+
+Production build: `npm run build` (output in `frontend/dist/`).
+
+## Project Structure
+
+```
+app/
+  models/        Business, Transaction (SQLAlchemy)
+  engine/        core.py (reporting/insights/advice), parser.py (message parsing)
+  routes/        auth, transactions, reports, chat, pages
+  templates/     login, dashboard, chat (simple server-rendered UI)
+config.py         DB config (MySQL via DATABASE_URL)
+run.py            entry point
+seed.py           demo data generator
+frontend/         React (Vite + TypeScript + Tailwind) SPA — auth, dashboard, chat
 ```
 
 ## Authentication
@@ -106,7 +138,7 @@ The unauthenticated health check `GET /` returns `{ "status": "ok" }`.
 The seed script resets the configured database with demo data. Use it only in
 development or against a disposable database:
 
-```powershell
+```bash
 python seed.py
 ```
 
