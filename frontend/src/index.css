@@ -31,3 +31,9 @@ body {
   background: #99f6e4;
   color: #134e4a;
 }
+
+@media (max-width: 768px) {
+  main {
+    padding-bottom: 5rem;
+  }
+}

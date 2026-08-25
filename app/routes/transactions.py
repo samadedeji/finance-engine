@@ -3,6 +3,7 @@ from datetime import datetime, date
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
+from app import db
 from app.engine.core import add_transaction
 from app.models.transaction import Transaction
 
@@ -59,3 +60,32 @@ def list_transactions():
         .all()
     )
     return jsonify([t.to_dict() for t in txns]), 200
+
+
+@transactions_bp.route("/transactions/categories", methods=["GET"])
+@jwt_required()
+def recent_categories():
+    """Return recently used categories with counts for smart suggestions."""
+    business_id = int(get_jwt_identity())
+    txns = (
+        Transaction.query.filter_by(business_id=business_id)
+        .order_by(Transaction.created_at.desc())
+        .limit(100)
+        .all()
+    )
+    counts = {}
+    for t in txns:
+        counts[t.category] = counts.get(t.category, 0) + 1
+    ranked = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+    return jsonify([{"category": c, "count": n} for c, n in ranked]), 200
+
+
+@transactions_bp.route("/transactions/<int:txn_id>", methods=["DELETE"])
+@jwt_required()
+def delete_transaction(txn_id):
+    """Delete a specific transaction (for undo / error correction)."""
+    business_id = int(get_jwt_identity())
+    txn = Transaction.query.filter_by(id=txn_id, business_id=business_id).first_or_404()
+    db.session.delete(txn)
+    db.session.commit()
+    return jsonify({"message": "Transaction deleted", "deleted": txn.to_dict()}), 200

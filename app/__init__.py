@@ -43,11 +43,19 @@ def create_app(config_class=Config):
     from app.routes.transactions import transactions_bp
     from app.routes.reports import reports_bp
     from app.routes.chat import chat_bp
+    from app.routes.analytics import analytics_bp
+    from app.routes.savings import savings_bp
+    from app.routes.alerts import alerts_bp
+    from app.routes.wema import wema_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api")
     app.register_blueprint(transactions_bp, url_prefix="/api")
     app.register_blueprint(reports_bp, url_prefix="/api")
     app.register_blueprint(chat_bp, url_prefix="/api")
+    app.register_blueprint(analytics_bp, url_prefix="/api")
+    app.register_blueprint(savings_bp, url_prefix="/api")
+    app.register_blueprint(alerts_bp, url_prefix="/api")
+    app.register_blueprint(wema_bp, url_prefix="/api")
 
     @app.route("/")
     def health():

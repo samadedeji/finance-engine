@@ -62,6 +62,13 @@ def _period_bounds(period: str, reference: date_cls = None):
         current_end = reference
         previous_start = reference - timedelta(days=1)
         previous_end = previous_start
+    elif period == "month":
+        current_start = reference.replace(day=1)
+        current_end = reference
+        # previous month
+        prev_month_end = current_start - timedelta(days=1)
+        previous_start = prev_month_end.replace(day=1)
+        previous_end = prev_month_end
     else:  # default: week
         current_start = reference - timedelta(days=reference.weekday())
         current_end = reference
@@ -75,6 +82,7 @@ def _sum_by_type(transactions, type_):
 
 
 def _top_categories(transactions, type_="expense", limit=3):
+    """Top categories for any transaction type (income or expense)."""
     totals = {}
     for t in transactions:
         if t.type == type_:
@@ -109,31 +117,73 @@ def _generate_insights(current_income, previous_income, current_expenses, previo
     elif net_current < net_previous:
         insights.append("Your net income dropped compared to the previous period")
 
+    margin = (net_current / current_income * 100) if current_income > 0 else 0
+    if margin > 0:
+        insights.append(f"Your profit margin is {margin:.0f}% this period")
+
     return insights
 
 
-def _generate_advice(current_income, previous_income, current_expenses, previous_expenses, top_expenses):
+def _generate_advice(
+    current_income, previous_income,
+    current_expenses, previous_expenses,
+    top_expenses, top_sales=None,
+):
     advice = []
 
     income_change = _pct_change(current_income, previous_income)
     expense_change = _pct_change(current_expenses, previous_expenses)
 
+    # Shrinking margin warning
     if expense_change > income_change and current_expenses > 0:
         advice.append("Expenses are growing faster than income — your margin is shrinking. Worth a closer look.")
 
+    # Top expense category
     if top_expenses:
         top = top_expenses[0]
-        advice.append(f"'{top['category']}' is your biggest expense this period — see if there's room to cut it.")
+        advice.append(
+            f"'{top['category']}' is your biggest expense this period "
+            f"({format_naira(top['amount'])}) — see if there's room to cut it."
+        )
 
+    # Fast-moving sales item → restock suggestion
+    if top_sales:
+        top_sale = top_sales[0]
+        advice.append(
+            f"'{top_sale['category']}' is your top seller ({format_naira(top_sale['amount'])}) — "
+            f"make sure you stay stocked on it."
+        )
+
+    # Consecutive losses
     net_current = current_income - current_expenses
     net_previous = previous_income - previous_expenses
     if net_current < 0 and net_previous < 0:
         advice.append("You've run a loss for two periods in a row — plan for a tighter week ahead.")
+    elif net_current < 0:
+        advice.append("You're in the red this period. Watch spending closely next week.")
+
+    # Declining net income trend
+    if (
+        previous_income > 0
+        and current_income > 0
+        and net_previous > 0
+        and net_current < net_previous
+    ):
+        drop_pct = _pct_change(net_current, net_previous)
+        if drop_pct < -10:
+            advice.append(
+                f"Net income dropped {abs(drop_pct)}% — small cuts to expenses could reverse this."
+            )
 
     if not advice:
         advice.append("Your finances look stable this period — keep tracking to spot trends early.")
 
     return advice
+
+
+def format_naira(amount: float) -> str:
+    """Format a number as Naira currency string."""
+    return f"₦{amount:,.0f}"
 
 
 def get_report(business_id: int, period: str = "week") -> dict:
@@ -171,12 +221,15 @@ def get_report(business_id: int, period: str = "week") -> dict:
     previous_expenses = _sum_by_type(previous_txns, "expense")
 
     top_expense_categories = _top_categories(current_txns, "expense", limit=3)
+    top_sales_categories = _top_categories(current_txns, "income", limit=3)
 
     insights = _generate_insights(
         current_income, previous_income, current_expenses, previous_expenses
     )
     advice = _generate_advice(
-        current_income, previous_income, current_expenses, previous_expenses, top_expense_categories
+        current_income, previous_income,
+        current_expenses, previous_expenses,
+        top_expense_categories, top_sales_categories,
     )
 
     return {

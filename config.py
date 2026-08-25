@@ -9,12 +9,23 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 database_uri = os.getenv("DATABASE_URL")
 if not database_uri:
-    raise RuntimeError("DATABASE_URL is required and must be a MySQL connection URI")
-if database_uri.startswith("postgres://"):
-    database_uri = database_uri.replace("postgres://", "postgresql://", 1)
-
-if not database_uri.startswith("postgresql://"):
-    raise RuntimeError("DATABASE_URL must use the postgresql:// driver")
+    # Fallback to SQLite for local development when no DATABASE_URL is set
+    database_uri = f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'app.db')}"
+    os.makedirs(os.path.join(BASE_DIR, "instance"), exist_ok=True)
+    warnings.warn(
+        "DATABASE_URL not set — falling back to local SQLite database.",
+        RuntimeWarning,
+    )
+else:
+    # Render and some providers use postgres:// which SQLAlchemy rejects
+    if database_uri.startswith("postgres://"):
+        database_uri = database_uri.replace("postgres://", "postgresql://", 1)
+    if not (
+        database_uri.startswith("postgresql://")
+        or database_uri.startswith("mysql+mysqlconnector://")
+        or database_uri.startswith("sqlite+")
+    ):
+        raise RuntimeError("DATABASE_URL must use postgresql://, mysql+mysqlconnector://, or sqlite:/// driver")
 
 if "SECRET_KEY" not in os.environ:
     warnings.warn(

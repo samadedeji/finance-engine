@@ -93,3 +93,37 @@ def parse_message(text: str) -> dict:
         "amount": amount,
         "note": original,
     }
+
+
+# Query intents — messages that ask for reports rather than logging transactions
+QUERY_PATTERNS = {
+    "week": [
+        "how's my week?", "how is my week", "how's my week",
+        "week report", "weekly report", "this week",
+        "how did i do this week", "how was my week",
+    ],
+    "day": [
+        "how's my day?", "how is my day", "how's my day",
+        "today report", "daily report", "today",
+        "how did i do today", "how was my day",
+    ],
+    "month": [
+        "how's my month?", "how is my month", "how's my month",
+        "monthly report", "this month", "month report",
+        "how did i do this month", "how was my month",
+    ],
+}
+
+
+def classify_query(text: str) -> str | None:
+    """
+    Returns the period string ('day', 'week', 'month') if the message is a
+    report query, or None if it's a transaction message.
+    """
+    if not text:
+        return None
+    lowered = text.strip().lower()
+    for period, patterns in QUERY_PATTERNS.items():
+        if lowered in patterns:
+            return period
+    return None

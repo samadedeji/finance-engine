@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: fiengine-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fiengine-db
+          property: connectionString
+      - key: FRONTEND_ORIGIN
+        sync: false
+        value: ""
+
+databases:
+  - name: fiengine-db
+    plan: free
+    databaseName: fiengine
+    user: fiengine

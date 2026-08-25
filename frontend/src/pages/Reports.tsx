@@ -81,7 +81,7 @@ export default function Reports() {
           </p>
         </div>
         <div className="flex rounded-full border border-slate-200 bg-white p-1">
-          {(['day', 'week'] as Period[]).map((p) => (
+          {(['day', 'week', 'month'] as Period[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}

@@ -12,7 +12,7 @@ def report():
     business_id = int(get_jwt_identity())
     period = request.args.get("period", default="week")
 
-    if period not in ("day", "week"):
-        return jsonify({"error": "period must be 'day' or 'week'"}), 400
+    if period not in ("day", "week", "month"):
+        return jsonify({"error": "period must be 'day', 'week', or 'month'"}), 400
 
     return jsonify(get_report(business_id, period)), 200
