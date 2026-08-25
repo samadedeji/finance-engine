@@ -29,12 +29,12 @@ export default function Register() {
   }
 
   return (
-    <div className="mx-auto mt-8 max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-      <h1 className="text-2xl font-bold text-slate-900">Create your business account</h1>
-      <p className="mt-1 text-sm text-slate-500">Start tracking sales and expenses in minutes.</p>
+    <div className="mx-auto mt-12 max-w-md rounded-lg border border-brand-100 bg-white p-8">
+      <h1 className="text-2xl font-bold text-brand-900">Create your account</h1>
+      <p className="mt-1 text-sm text-brand-500">Start tracking sales and expenses in minutes.</p>
 
       {error && (
-        <div className="mt-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
+        <div className="mt-4 rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
       )}
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -42,18 +42,18 @@ export default function Register() {
           name="name"
           required
           placeholder="Business name"
-          className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          className="w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm text-brand-900 placeholder:text-brand-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
         />
         <input
           name="business_type"
-          placeholder="Business type (optional, e.g. retail)"
-          className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          placeholder="Business type (optional)"
+          className="w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm text-brand-900 placeholder:text-brand-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
         />
         <input
           name="phone_number"
           required
-          placeholder="Phone number (e.g. 08010000000)"
-          className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          placeholder="Phone number"
+          className="w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm text-brand-900 placeholder:text-brand-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
         />
         <input
           name="password"
@@ -61,17 +61,17 @@ export default function Register() {
           required
           minLength={6}
           placeholder="Password (min 6 characters)"
-          className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          className="w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm text-brand-900 placeholder:text-brand-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
         />
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg bg-brand-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-900 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading ? 'Creating account…' : 'Create account'}
+          {loading ? 'Creating account...' : 'Create account'}
         </button>
       </form>
-      <p className="mt-4 text-center text-sm text-slate-500">
+      <p className="mt-4 text-center text-sm text-brand-500">
         Already have an account?{' '}
         <Link to="/login" className="font-semibold text-brand-700 hover:underline">
           Sign in

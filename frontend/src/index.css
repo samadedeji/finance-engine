@@ -2,12 +2,16 @@
 
 @theme {
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --color-brand-50: #f0fdfa;
-  --color-brand-100: #ccfbf1;
-  --color-brand-500: #14b8a6;
-  --color-brand-600: #0d9488;
-  --color-brand-700: #0f766e;
-  --color-brand-800: #115e59;
+  --color-brand-50: #f0f4f8;
+  --color-brand-100: #d9e2ec;
+  --color-brand-200: #bcccdc;
+  --color-brand-300: #9fb3c8;
+  --color-brand-400: #829ab1;
+  --color-brand-500: #627d98;
+  --color-brand-600: #486581;
+  --color-brand-700: #334e68;
+  --color-brand-800: #243b53;
+  --color-brand-900: #102a43;
 }
 
 html {
@@ -17,8 +21,8 @@ html {
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: #f7f9fc;
+  color: #1a2332;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -28,10 +32,31 @@ body {
 }
 
 ::selection {
-  background: #99f6e4;
-  color: #134e4a;
+  background: #c3d0e0;
+  color: #102a43;
 }
 
+/* Professional loading spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e2e8f0;
+  border-top-color: #334e68;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* Clean focus ring */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+}
+
+/* Mobile bottom padding */
 @media (max-width: 768px) {
   main {
     padding-bottom: 5rem;

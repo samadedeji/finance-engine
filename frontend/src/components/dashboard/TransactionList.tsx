@@ -14,40 +14,40 @@ function dateLabel(iso: string) {
 export default function TransactionList({ transactions, loading }: Props) {
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm text-slate-400">Loading transactions…</p>
+      <div className="rounded-lg border border-brand-100 bg-white p-5">
+        <div className="spinner" />
       </div>
     )
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-        <h2 className="text-base font-semibold text-slate-900">Transaction history</h2>
-        <span className="text-xs font-medium text-slate-400">{transactions.length} records</span>
+    <div className="rounded-lg border border-brand-100 bg-white">
+      <div className="flex items-center justify-between border-b border-brand-100 px-5 py-4">
+        <h2 className="text-sm font-semibold text-brand-900">Transaction history</h2>
+        <span className="text-xs text-brand-400">{transactions.length} records</span>
       </div>
 
       {transactions.length === 0 ? (
-        <p className="px-5 py-10 text-center text-sm text-slate-400">
+        <p className="px-5 py-10 text-center text-sm text-brand-400">
           No transactions yet. Log your first sale or expense.
         </p>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-brand-50">
           {transactions.map((t) => (
             <li key={t.id} className="flex items-center gap-3 px-5 py-3">
               <span
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                  t.type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${
+                  t.type === 'income' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
                 }`}
               >
-                {t.type === 'income' ? '+' : '−'}
+                {t.type === 'income' ? '+' : '-'}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium capitalize text-slate-900">
+                <p className="truncate text-sm font-medium text-brand-900">
                   {t.note || t.category}
                 </p>
-                <p className="text-xs text-slate-400 capitalize">
-                  {t.category} · {dateLabel(t.date)}
+                <p className="text-xs text-brand-400 capitalize">
+                  {t.category} &middot; {dateLabel(t.date)}
                 </p>
               </div>
               <p
@@ -55,7 +55,7 @@ export default function TransactionList({ transactions, loading }: Props) {
                   t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
                 }`}
               >
-                {t.type === 'income' ? '+' : '−'}
+                {t.type === 'income' ? '+' : '-'}
                 {formatNaira(t.amount)}
               </p>
             </li>

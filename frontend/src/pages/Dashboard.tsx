@@ -52,8 +52,8 @@ export default function Dashboard() {
 
   useEffect(() => { void refresh() }, [refresh])
 
-  const handleExport = async () => {
-    window.open(`/api/analytics/export?format=csv`, '_blank')
+  const handleExport = () => {
+    window.open('/api/analytics/export?format=csv', '_blank')
   }
 
   const hour = new Date().getHours()
@@ -63,25 +63,25 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-brand-900">
             {greeting}, {business.name}
           </h1>
-          <p className="text-sm text-slate-500">Here's how your business is doing.</p>
+          <p className="text-sm text-brand-500">Here is how your business is doing.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleExport}
-            className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+            className="flex items-center gap-1 rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
           >
             <Download size={12} /> Export
           </button>
-          <div className="flex rounded-full border border-slate-200 bg-white p-1">
+          <div className="flex rounded-lg border border-brand-200 bg-white p-0.5">
             {(['day', 'week', 'month'] as Period[]).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-colors ${
-                  period === p ? 'bg-brand-700 text-white' : 'text-slate-600 hover:text-slate-900'
+                className={`rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
+                  period === p ? 'bg-brand-800 text-white' : 'text-brand-500 hover:text-brand-700'
                 }`}
               >
                 {p}
@@ -92,40 +92,21 @@ export default function Dashboard() {
       </div>
 
       {error && (
-        <div className="rounded-2xl bg-rose-50 px-5 py-4 text-sm text-rose-700">{error}</div>
+        <div className="rounded-lg bg-rose-50 px-5 py-4 text-sm text-rose-700">{error}</div>
       )}
 
       {loading && !report ? (
-        <p className="py-16 text-center text-sm text-slate-400">Loading your report…</p>
+        <div className="py-16 text-center"><div className="spinner mx-auto" /></div>
       ) : (
         <>
-          {/* Row 1: Stats + Streak + Margin */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <StatCard
-              label="Income"
-              value={formatNaira(report?.total_income ?? 0)}
-              trend={report?.income_trend_pct}
-              tone="income"
-              icon={<ArrowUpRight size={18} />}
-            />
-            <StatCard
-              label="Expenses"
-              value={formatNaira(report?.total_expenses ?? 0)}
-              trend={report?.expense_trend_pct}
-              tone="expense"
-              icon={<ArrowDownRight size={18} />}
-            />
-            <StatCard
-              label="Net"
-              value={formatNaira(report?.net ?? 0)}
-              tone={report && report.net >= 0 ? 'net' : 'expense'}
-              icon={<Wallet size={18} />}
-            />
+            <StatCard label="Income" value={formatNaira(report?.total_income ?? 0)} trend={report?.income_trend_pct} tone="income" icon={<ArrowUpRight size={18} />} />
+            <StatCard label="Expenses" value={formatNaira(report?.total_expenses ?? 0)} trend={report?.expense_trend_pct} tone="expense" icon={<ArrowDownRight size={18} />} />
+            <StatCard label="Net" value={formatNaira(report?.net ?? 0)} tone={report && report.net >= 0 ? 'net' : 'expense'} icon={<Wallet size={18} />} />
             <StreakCard streak={streak} />
             <MarginGauge income={report?.total_income ?? 0} expenses={report?.total_expenses ?? 0} />
           </div>
 
-          {/* Row 2: Transaction Form + Insights + Restock + Loan */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
             <div className="lg:col-span-2">
               <TransactionForm onSaved={() => void refresh()} />
@@ -139,16 +120,11 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Row 3: Donut + Calendar */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <DonutChart
-              categories={report?.top_expense_categories ?? []}
-              totalExpenses={report?.total_expenses ?? 0}
-            />
+            <DonutChart categories={report?.top_expense_categories ?? []} totalExpenses={report?.total_expenses ?? 0} />
             <CalendarHeatmap data={calendar} />
           </div>
 
-          {/* Row 4: Transaction History */}
           <TransactionList transactions={transactions} loading={loading} />
         </>
       )}

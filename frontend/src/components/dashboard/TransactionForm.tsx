@@ -49,11 +49,8 @@ export default function TransactionForm({ onSaved }: Props) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-    >
-      <h2 className="text-base font-semibold text-slate-900">Log a transaction</h2>
+    <form onSubmit={handleSubmit} className="rounded-lg border border-brand-100 bg-white p-5">
+      <h2 className="text-sm font-semibold text-brand-900">Log a transaction</h2>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
         {(['income', 'expense'] as TxnType[]).map((t) => (
@@ -61,12 +58,12 @@ export default function TransactionForm({ onSaved }: Props) {
             key={t}
             type="button"
             onClick={() => resetCategory(t)}
-            className={`rounded-xl px-4 py-2.5 text-sm font-semibold capitalize transition-colors ${
+            className={`rounded-lg px-4 py-2.5 text-sm font-medium capitalize transition-colors ${
               type === t
                 ? t === 'income'
                   ? 'bg-emerald-600 text-white'
                   : 'bg-rose-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-brand-50 text-brand-500 hover:bg-brand-100'
             }`}
           >
             {t}
@@ -79,31 +76,29 @@ export default function TransactionForm({ onSaved }: Props) {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
-          placeholder="Amount (₦)"
-          className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          placeholder="Amount (N)"
+          className="w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm text-brand-900 placeholder:text-brand-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
         />
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm capitalize focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          className="w-full rounded-lg border border-brand-200 bg-white px-3 py-2.5 text-sm capitalize text-brand-900 focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
         >
           {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
+            <option key={c} value={c}>{c}</option>
           ))}
         </select>
         <input
           value={date}
           onChange={(e) => setDate(e.target.value)}
           type="date"
-          className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          className="w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm text-brand-900 focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
         />
         <input
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Note (optional)"
-          className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          className="w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm text-brand-900 placeholder:text-brand-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
         />
       </div>
 
@@ -111,9 +106,9 @@ export default function TransactionForm({ onSaved }: Props) {
 
       <button
         disabled={saving}
-        className="mt-4 w-full rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-4 w-full rounded-lg bg-brand-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-900 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {saving ? 'Saving…' : 'Save transaction'}
+        {saving ? 'Saving...' : 'Save transaction'}
       </button>
     </form>
   )
