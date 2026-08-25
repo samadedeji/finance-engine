@@ -10,8 +10,11 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 database_uri = os.getenv("DATABASE_URL")
 if not database_uri:
     raise RuntimeError("DATABASE_URL is required and must be a MySQL connection URI")
-if not database_uri.startswith("mysql+mysqlconnector://"):
-    raise RuntimeError("DATABASE_URL must use the mysql+mysqlconnector:// driver")
+if database_uri.startswith("postgres://"):
+    database_uri = database_uri.replace("postgres://", "postgresql://", 1)
+
+if not database_uri.startswith("postgresql://"):
+    raise RuntimeError("DATABASE_URL must use the postgresql:// driver")
 
 if "SECRET_KEY" not in os.environ:
     warnings.warn(

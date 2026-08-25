@@ -37,7 +37,7 @@ def create_app(config_class=Config):
     def _revoked_token(jwt_header, jwt_payload):
         return jsonify({"error": "Authorization token has been revoked"}), 401
 
-    CORS(app, origins=[os.environ.get("FRONTEND_ORIGIN", "http://localhost:8080")])
+    CORS(app, origins=[os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")])
 
     from app.routes.auth import auth_bp
     from app.routes.transactions import transactions_bp
